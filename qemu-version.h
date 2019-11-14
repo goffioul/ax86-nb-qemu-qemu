@@ -1,0 +1,2 @@
+#define QEMU_PKGVERSION "v4.1.0-1731-g69717d0f89-dirty"
+#define QEMU_FULL_VERSION "4.1.50 (v4.1.0-1731-g69717d0f89-dirty)"
