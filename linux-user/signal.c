@@ -182,6 +182,18 @@ int block_signals(void)
     return atomic_xchg(&ts->signal_pending, 1);
 }
 
+#ifdef __ANDROID__
+static inline int sigorset(sigset_t* dest, const sigset_t* left, const sigset_t* right) {
+  sigemptyset(dest);
+  for (size_t i = 0; i < sizeof(sigset_t) * CHAR_BIT; ++i) {
+    if (sigismember(left, i) == 1 || sigismember(right, i) == 1) {
+      sigaddset(dest, i);
+    }
+  }
+  return 0;
+}
+#endif
+
 /* Wrapper for sigprocmask function
  * Emulates a sigprocmask in a safe way for the guest. Note that set and oldset
  * are host signal set, not guest ones. Returns -TARGET_ERESTARTSYS if

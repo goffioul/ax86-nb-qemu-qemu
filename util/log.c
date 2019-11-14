@@ -31,6 +31,52 @@ int qemu_loglevel;
 static int log_append = 0;
 static GArray *debug_regions;
 
+#ifdef __ANDROID__
+
+#include <android/log.h>
+
+#define PRINT_BUFFER_LEN 4096
+__thread char android_log_buffer[PRINT_BUFFER_LEN];
+__thread int android_log_buffer_pos;
+
+static void qemu_android_log_flush()
+{
+  char *from = android_log_buffer, *to;
+
+  while (*from != '\0' && (to = strchr(from, '\n')) != NULL) {
+      *to = '\0';
+      __android_log_print(ANDROID_LOG_VERBOSE, "libqemu", "%s", from);
+      from = to + 1;
+  }
+  if (from != android_log_buffer && *from != '\0') {
+      int len = strlen(from);
+      memmove(android_log_buffer, from, len + 1);
+      android_log_buffer_pos = strlen(android_log_buffer);
+  }
+  else {
+      android_log_buffer_pos = 0;
+  }
+}
+
+int qemu_android_vfprintf(FILE *stream, const char *format, va_list vl)
+{
+  int ret = vsnprintf(&android_log_buffer[android_log_buffer_pos], PRINT_BUFFER_LEN - android_log_buffer_pos, format, vl);
+  qemu_android_log_flush();
+  return ret;
+}
+
+int qemu_android_fprintf(FILE *stream, const char *format, ...)
+{
+  int ret;
+  va_list vl;
+  va_start(vl, format);
+  ret = qemu_android_vfprintf(stream, format, vl);
+  va_end(vl);
+  return ret;
+}
+
+#endif
+
 /* Return the number of characters emitted.  */
 int qemu_log(const char *fmt, ...)
 {
@@ -38,7 +84,11 @@ int qemu_log(const char *fmt, ...)
     if (qemu_logfile) {
         va_list ap;
         va_start(ap, fmt);
+#ifdef __ANDROID__
+        ret = qemu_android_vfprintf(qemu_logfile, fmt, ap);
+#else
         ret = vfprintf(qemu_logfile, fmt, ap);
+#endif
         va_end(ap);
 
         /* Don't pass back error results.  */
@@ -224,6 +274,9 @@ out:
 /* fflush() the log file */
 void qemu_log_flush(void)
 {
+#ifdef __ANDROID__
+    qemu_android_log_flush();
+#endif
     fflush(qemu_logfile);
 }
 

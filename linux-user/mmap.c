@@ -22,6 +22,26 @@
 
 //#define DEBUG_MMAP
 
+#if 0
+
+static void *log_mmap(void *addr, size_t length, int prot, int flags, int fd, off_t offset)
+{
+  void *mapped = mmap(addr, length, prot, flags, fd, offset);
+  qemu_log("mmap  : %p - %p [%d]\n", mapped, ((char*)mapped) + length, length);
+  return mapped;
+}
+
+static int log_munmap(void *addr, size_t length)
+{
+  qemu_log("munmap: %p - %p [%d]\n", addr, ((char*)addr) + length, length);
+  return munmap(addr, length);
+}
+
+#define mmap log_mmap
+#define munmap log_munmap
+
+#endif
+
 static pthread_mutex_t mmap_mutex = PTHREAD_MUTEX_INITIALIZER;
 static __thread int mmap_lock_count;
 

@@ -2622,4 +2622,24 @@ struct target_statx {
    /* 0x100 */
 };
 
+#ifdef __ANDROID__
+
+typedef uint64_t target_binder_size_t;
+typedef uint64_t target_binder_uintptr_t;
+
+struct target_binder_write_read {
+    target_binder_size_t write_size;
+    target_binder_size_t write_consumed;
+    target_binder_uintptr_t write_buffer;
+    target_binder_size_t read_size;
+    target_binder_size_t read_consumed;
+    target_binder_uintptr_t read_buffer;
+};
+
+#define TARGET_BINDER_WRITE_READ TARGET_IOWR('b', 1, struct target_binder_write_read)
+#define TARGET_BINDER_SET_MAX_THREADS TARGET_IOW('b', 5, uint32_t)
+#define TARGET_BINDER_VERSION TARGET_IOWR('b', 9, int32_t)
+
+#endif
+
 #endif

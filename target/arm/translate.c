@@ -8156,10 +8156,14 @@ static bool trans_YIELD(DisasContext *s, arg_YIELD *a)
      * MTTCG we don't generate jumps to the helper as it won't affect the
      * scheduling of other vCPUs.
      */
+#ifndef __ANDROID__
     if (!(tb_cflags(s->base.tb) & CF_PARALLEL)) {
+#endif
         gen_set_pc_im(s, s->base.pc_next);
         s->base.is_jmp = DISAS_YIELD;
+#ifndef __ANDROID__
     }
+#endif
     return true;
 }
 
@@ -10911,6 +10915,9 @@ static void arm_tr_init_disas_context(DisasContextBase *dcbase, CPUState *cs)
     cpu_V1 = tcg_temp_new_i64();
     /* FIXME: cpu_M0 can probably be the same as cpu_V0.  */
     cpu_M0 = tcg_temp_new_i64();
+#ifdef __ANDROID__
+    dc->pc_stop = env->pc_stop;
+#endif
 }
 
 static void arm_tr_tb_start(DisasContextBase *dcbase, CPUState *cpu)
@@ -10995,6 +11002,13 @@ static bool arm_tr_breakpoint_check(DisasContextBase *dcbase, CPUState *cpu,
 
 static bool arm_pre_translate_insn(DisasContext *dc)
 {
+#ifdef __ANDROID__
+    if (dc->base.pc_next == dc->pc_stop) {
+        trans_YIELD(dc, NULL);
+        return true;
+    }
+#endif
+
 #ifdef CONFIG_USER_ONLY
     /* Intercept jump to the magic kernel page.  */
     if (dc->base.pc_next >= 0xffff0000) {
@@ -11301,7 +11315,7 @@ static void arm_tr_disas_log(const DisasContextBase *dcbase, CPUState *cpu)
 {
     DisasContext *dc = container_of(dcbase, DisasContext, base);
 
-    qemu_log("IN: %s\n", lookup_symbol(dc->base.pc_first));
+    qemu_log("IN: [%08x] %s\n", dc->base.pc_first, lookup_symbol(dc->base.pc_first));
     log_target_disas(cpu, dc->base.pc_first, dc->base.tb->size);
 }
 

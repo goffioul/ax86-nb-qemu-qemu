@@ -7,6 +7,13 @@
 /* Private global variable, don't use */
 extern FILE *qemu_logfile;
 
+#ifdef __ANDROID__
+
+int qemu_android_fprintf(FILE *f, const char *format, ...);
+int qemu_android_vfprintf(FILE *f, const char *format, va_list v);
+
+#endif
+
 /* 
  * The new API:
  *
@@ -70,7 +77,11 @@ static inline void GCC_FMT_ATTR(1, 0)
 qemu_log_vprintf(const char *fmt, va_list va)
 {
     if (qemu_logfile) {
+#ifdef __ANDROID__
+        qemu_android_vfprintf(qemu_logfile, fmt, va);
+#else
         vfprintf(qemu_logfile, fmt, va);
+#endif
     }
 }
 

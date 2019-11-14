@@ -219,6 +219,17 @@ void init_qemu_uname_release(void);
 void fork_start(void);
 void fork_end(int child);
 
+#ifdef __ANDROID__
+int qemu_main(int argc, char **argv, char **envp);
+typedef abi_long(*syscall_handler_t)(void *cpu_env, int num,
+                                  abi_long arg1, abi_long arg2, abi_long arg3,
+                                  abi_long arg4, abi_long arg5, abi_long arg6);
+extern syscall_handler_t syscall_handler;
+extern const char *cpu_type;
+extern struct image_info *info;
+extern struct linux_binprm *bprm;
+#endif
+
 /* Creates the initial guest address space in the host memory space using
  * the given host start address hint and size.  The guest_start parameter
  * specifies the start address of the guest space.  guest_base will be the

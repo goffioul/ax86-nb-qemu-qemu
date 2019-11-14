@@ -416,6 +416,11 @@ void cpu_loop(CPUARMState *env)
             abort();
         }
         process_pending_signals(env);
+#ifdef __ANDROID__
+        if (trapnr == EXCP_YIELD) {
+            return;
+        }
+#endif
     }
 }
 

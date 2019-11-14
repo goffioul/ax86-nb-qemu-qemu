@@ -53,11 +53,21 @@ static const char *argv0;
 static int gdbstub_port;
 static envlist_t *envlist;
 static const char *cpu_model;
+#ifndef __ANDROID__
 static const char *cpu_type;
+#endif
 static const char *seed_optarg;
 unsigned long mmap_min_addr;
 unsigned long guest_base;
 int have_guest_base;
+
+#ifdef __ANDROID__
+const char *cpu_type;
+static struct image_info info1;
+static struct linux_binprm bprm1;
+struct image_info *info = &info1;
+struct linux_binprm *bprm = &bprm1;
+#endif
 
 /*
  * When running 32-on-64 we should make sure we can fit all of the possible
@@ -103,7 +113,11 @@ void gemu_log(const char *fmt, ...)
     va_list ap;
 
     va_start(ap, fmt);
+#ifdef __ANDROID__
+    qemu_android_vfprintf(stderr, fmt, ap);
+#else
     vfprintf(stderr, fmt, ap);
+#endif
     va_end(ap);
 }
 
@@ -600,11 +614,17 @@ static int parse_args(int argc, char **argv)
     return optind;
 }
 
+#ifdef __ANDROID__
+int qemu_main(int argc, char **argv, char **envp)
+#else
 int main(int argc, char **argv, char **envp)
+#endif
 {
     struct target_pt_regs regs1, *regs = &regs1;
+#ifndef __ANDROID__
     struct image_info info1, *info = &info1;
-    struct linux_binprm bprm;
+    struct linux_binprm bprm1, *bprm = &bprm1;
+#endif
     TaskState *ts;
     CPUArchState *env;
     CPUState *cpu;
@@ -657,14 +677,18 @@ int main(int argc, char **argv, char **envp)
     /* Zero out image_info */
     memset(info, 0, sizeof(struct image_info));
 
-    memset(&bprm, 0, sizeof (bprm));
+    memset(bprm, 0, sizeof(struct linux_binprm));
 
     /* Scan interp_prefix dir for replacement files. */
     init_paths(interp_prefix);
 
     init_qemu_uname_release();
 
+#ifdef __ANDROID__
+    execfd = 0;
+#else
     execfd = qemu_getauxval(AT_EXECFD);
+#endif
     if (execfd == 0) {
         execfd = open(exec_path, O_RDONLY);
         if (execfd < 0) {
@@ -677,6 +701,10 @@ int main(int argc, char **argv, char **envp)
         cpu_model = cpu_get_model(get_elf_eflags(execfd));
     }
     cpu_type = parse_cpu_option(cpu_model);
+
+#ifdef __ANDROID__
+    parallel_cpus = true;
+#endif
 
     /* init tcg before creating CPUs and to get qemu_host_page_size */
     tcg_exec_init(0);
@@ -789,12 +817,12 @@ int main(int argc, char **argv, char **envp)
     init_task_state(ts);
     /* build Task State */
     ts->info = info;
-    ts->bprm = &bprm;
+    ts->bprm = bprm;
     cpu->opaque = ts;
     task_settid(ts);
 
     ret = loader_exec(execfd, exec_path, target_argv, target_environ, regs,
-        info, &bprm);
+        info, bprm);
     if (ret != 0) {
         printf("Error while loading %s: %s\n", exec_path, strerror(-ret));
         _exit(EXIT_FAILURE);
@@ -826,7 +854,9 @@ int main(int argc, char **argv, char **envp)
 
     target_set_brk(info->brk);
     syscall_init();
+#ifndef __ANDROID__
     signal_init();
+#endif
 
     /* Now that we've loaded the binary, GUEST_BASE is fixed.  Delay
        generating the prologue until now so that the prologue can take
@@ -835,6 +865,10 @@ int main(int argc, char **argv, char **envp)
     tcg_region_init();
 
     target_cpu_copy_regs(env, regs);
+
+#ifdef __ANDROID__
+    env->pc_stop = info->start_code;
+#endif
 
     if (gdbstub_port) {
         if (gdbserver_start(gdbstub_port) < 0) {
@@ -846,5 +880,6 @@ int main(int argc, char **argv, char **envp)
     }
     cpu_loop(env);
     /* never exits */
+
     return 0;
 }

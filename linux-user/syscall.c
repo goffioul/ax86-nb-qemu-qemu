@@ -16,6 +16,13 @@
  *  You should have received a copy of the GNU General Public License
  *  along with this program; if not, see <http://www.gnu.org/licenses/>.
  */
+#define termios host_termios
+#define winsize host_winsize
+#define termio host_termio
+#define sgttyb host_sgttyb /* same as target */
+#define tchars host_tchars /* same as target */
+#define ltchars host_ltchars /* same as target */
+
 #define _ATFILE_SOURCE
 #include "qemu/osdep.h"
 #include "qemu/cutils.h"
@@ -74,13 +81,6 @@
 #include <sys/sendfile.h>
 #endif
 
-#define termios host_termios
-#define winsize host_winsize
-#define termio host_termio
-#define sgttyb host_sgttyb /* same as target */
-#define tchars host_tchars /* same as target */
-#define ltchars host_ltchars /* same as target */
-
 #include <linux/termios.h>
 #include <linux/unistd.h>
 #include <linux/cdrom.h>
@@ -117,6 +117,17 @@
 
 #ifndef CLONE_IO
 #define CLONE_IO                0x80000000      /* Clone io context */
+#endif
+
+#ifdef __ANDROID__
+
+#include <linux/android/binder.h>
+
+/* Disable unsupported syscalls on Android */
+#undef TARGET_NR_stime
+#undef TARGET_NR_vhangup
+#undef TARGET_NR_mq_open
+
 #endif
 
 /* We can't directly call the host clone syscall, because this will
@@ -3443,12 +3454,14 @@ static inline abi_long host_to_target_seminfo(abi_ulong target_addr,
     return 0;
 }
 
+#ifndef __ANDROID__
 union semun {
 	int val;
 	struct semid_ds *buf;
 	unsigned short *array;
 	struct seminfo *__buf;
 };
+#endif
 
 union target_semun {
 	int val;
@@ -3679,7 +3692,11 @@ static inline abi_long target_to_host_msqid_ds(struct msqid_ds *host_md,
     host_md->msg_stime = tswapal(target_md->msg_stime);
     host_md->msg_rtime = tswapal(target_md->msg_rtime);
     host_md->msg_ctime = tswapal(target_md->msg_ctime);
+#ifdef __ANDROID__
+    host_md->msg_cbytes = tswapal(target_md->__msg_cbytes);
+#else
     host_md->__msg_cbytes = tswapal(target_md->__msg_cbytes);
+#endif
     host_md->msg_qnum = tswapal(target_md->msg_qnum);
     host_md->msg_qbytes = tswapal(target_md->msg_qbytes);
     host_md->msg_lspid = tswapal(target_md->msg_lspid);
@@ -3700,7 +3717,11 @@ static inline abi_long host_to_target_msqid_ds(abi_ulong target_addr,
     target_md->msg_stime = tswapal(host_md->msg_stime);
     target_md->msg_rtime = tswapal(host_md->msg_rtime);
     target_md->msg_ctime = tswapal(host_md->msg_ctime);
+#ifdef __ANDROID__
+    target_md->__msg_cbytes = tswapal(host_md->msg_cbytes);
+#else
     target_md->__msg_cbytes = tswapal(host_md->__msg_cbytes);
+#endif
     target_md->msg_qnum = tswapal(host_md->msg_qnum);
     target_md->msg_qbytes = tswapal(host_md->msg_qbytes);
     target_md->msg_lspid = tswapal(host_md->msg_lspid);
@@ -9117,8 +9138,10 @@ static abi_long do_syscall1(void *cpu_env, int num, abi_long arg1,
         }
         return ret;
 #endif
+#ifdef TARGET_NR_vhangup
     case TARGET_NR_vhangup:
         return get_errno(vhangup());
+#endif
 #ifdef TARGET_NR_syscall
     case TARGET_NR_syscall:
         return do_syscall(cpu_env, arg1 & 0xffff, arg2, arg3, arg4, arg5,
@@ -11956,6 +11979,11 @@ static abi_long do_syscall1(void *cpu_env, int num, abi_long arg1,
 #endif
 
     default:
+#ifdef __ANDROID__
+        if (syscall_handler) {
+            return syscall_handler(cpu_env, num, arg1, arg2, arg3, arg4, arg5, arg6);
+        }
+#endif
         qemu_log_mask(LOG_UNIMP, "Unsupported syscall: %d\n", num);
         return -TARGET_ENOSYS;
     }
@@ -12000,3 +12028,7 @@ abi_long do_syscall(void *cpu_env, int num, abi_long arg1,
     trace_guest_user_syscall_ret(cpu, num, ret);
     return ret;
 }
+
+#ifdef __ANDROID__
+syscall_handler_t syscall_handler = NULL;
+#endif
