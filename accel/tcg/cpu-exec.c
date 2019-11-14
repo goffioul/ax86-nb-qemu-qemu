@@ -616,6 +616,9 @@ static inline void cpu_loop_exec_tb(CPUState *cpu, TranslationBlock *tb,
     int32_t insns_left;
 
     trace_exec_tb(tb, tb->pc);
+#ifdef __ANDROID__
+    //qemu_log("TB: pc=%08x\n", tb->pc);
+#endif
     ret = cpu_tb_exec(cpu, tb);
     tb = (TranslationBlock *)(ret & ~TB_EXIT_MASK);
     *tb_exit = ret & TB_EXIT_MASK;

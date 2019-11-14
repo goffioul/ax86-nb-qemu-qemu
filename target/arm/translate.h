@@ -95,6 +95,9 @@ typedef struct DisasContext {
 #define TMP_A64_MAX 16
     int tmp_a64_count;
     TCGv_i64 tmp_a64[TMP_A64_MAX];
+#ifdef __ANDROID__
+    uint64_t pc_stop;
+#endif
 } DisasContext;
 
 typedef struct DisasCompare {

@@ -1097,7 +1097,11 @@ static inline void code_gen_alloc(size_t tb_size)
     tcg_ctx->code_gen_buffer_size = size_code_gen_buffer(tb_size);
     tcg_ctx->code_gen_buffer = alloc_code_gen_buffer();
     if (tcg_ctx->code_gen_buffer == NULL) {
+#ifdef __ANDROID__
+        qemu_android_fprintf(stderr, "Could not allocate dynamic translator buffer\n");
+#else
         fprintf(stderr, "Could not allocate dynamic translator buffer\n");
+#endif
         exit(1);
     }
 }
@@ -2457,7 +2461,11 @@ static int dump_region(void *priv, target_ulong start,
 {
     FILE *f = (FILE *)priv;
 
+#ifdef __ANDROID__
+    (void) qemu_android_fprintf(f, TARGET_FMT_lx"-"TARGET_FMT_lx
+#else
     (void) fprintf(f, TARGET_FMT_lx"-"TARGET_FMT_lx
+#endif
         " "TARGET_FMT_lx" %c%c%c\n",
         start, end, end - start,
         ((prot & PAGE_READ) ? 'r' : '-'),
@@ -2471,7 +2479,11 @@ static int dump_region(void *priv, target_ulong start,
 void page_dump(FILE *f)
 {
     const int length = sizeof(target_ulong) * 2;
+#ifdef __ANDROID__
+    (void) qemu_android_fprintf(f, "%-*s %-*s %-*s %s\n",
+#else
     (void) fprintf(f, "%-*s %-*s %-*s %s\n",
+#endif
             length, "start", length, "end", length, "size", "prot");
     walk_memory_regions(f, dump_region);
 }

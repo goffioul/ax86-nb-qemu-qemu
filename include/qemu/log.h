@@ -14,6 +14,13 @@ typedef struct QemuLogFile {
 extern QemuLogFile *qemu_logfile;
 
 
+#ifdef __ANDROID__
+
+int qemu_android_fprintf(FILE *f, const char *format, ...);
+int qemu_android_vfprintf(FILE *f, const char *format, va_list v);
+
+#endif
+
 /* 
  * The new API:
  *
@@ -104,7 +111,11 @@ qemu_log_vprintf(const char *fmt, va_list va)
     rcu_read_lock();
     logfile = atomic_rcu_read(&qemu_logfile);
     if (logfile) {
+#ifdef __ANDROID__
+        qemu_android_vfprintf(logfile->fd, fmt, va);
+#else
         vfprintf(logfile->fd, fmt, va);
+#endif
     }
     rcu_read_unlock();
 }

@@ -21,6 +21,26 @@
 #include "exec/log.h"
 #include "qemu.h"
 
+#if 0
+
+static void *log_mmap(void *addr, size_t length, int prot, int flags, int fd, off_t offset)
+{
+  void *mapped = mmap(addr, length, prot, flags, fd, offset);
+  qemu_log("mmap  : %p - %p [%d]\n", mapped, ((char*)mapped) + length, length);
+  return mapped;
+}
+
+static int log_munmap(void *addr, size_t length)
+{
+  qemu_log("munmap: %p - %p [%d]\n", addr, ((char*)addr) + length, length);
+  return munmap(addr, length);
+}
+
+#define mmap log_mmap
+#define munmap log_munmap
+
+#endif
+
 static pthread_mutex_t mmap_mutex = PTHREAD_MUTEX_INITIALIZER;
 static __thread int mmap_lock_count;
 
@@ -542,9 +562,11 @@ abi_long target_mmap(abi_ulong start, abi_ulong len, int prot,
     page_set_flags(start, start + len, prot | PAGE_VALID);
  the_end:
     trace_target_mmap_complete(start);
+#if 0
     if (qemu_loglevel_mask(CPU_LOG_PAGE)) {
         log_page_dump(__func__);
     }
+#endif
     tb_invalidate_phys_range(start, start + len);
     mmap_unlock();
     return start;

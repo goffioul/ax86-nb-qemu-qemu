@@ -3,6 +3,9 @@
 #include "disas/dis-asm.h"
 #include "elf.h"
 #include "qemu/qemu-print.h"
+#ifdef __ANDROID__
+#include "qemu/log.h"
+#endif
 
 #include "cpu.h"
 #include "disas/disas.h"
@@ -430,7 +433,11 @@ void target_disas(FILE *out, CPUState *cpu, target_ulong code,
     int count;
     CPUDebug s;
 
+#ifdef __ANDROID__
+    INIT_DISASSEMBLE_INFO(s.info, out, qemu_android_fprintf);
+#else
     INIT_DISASSEMBLE_INFO(s.info, out, fprintf);
+#endif
 
     s.cpu = cpu;
     s.info.read_memory_func = target_read_memory;
@@ -461,16 +468,16 @@ void target_disas(FILE *out, CPUState *cpu, target_ulong code,
     }
 
     for (pc = code; size > 0; pc += count, size -= count) {
-	fprintf(out, "0x" TARGET_FMT_lx ":  ", pc);
+	s.info.fprintf_func(s.info.stream, "0x" TARGET_FMT_lx ":  ", pc);
 	count = s.info.print_insn(pc, &s.info);
-	fprintf(out, "\n");
+	s.info.fprintf_func(s.info.stream, "\n");
 	if (count < 0)
 	    break;
         if (size < count) {
-            fprintf(out,
-                    "Disassembler disagrees with translator over instruction "
-                    "decoding\n"
-                    "Please report this to qemu-devel@nongnu.org\n");
+            s.info.fprintf_func(s.info.stream,
+                                "Disassembler disagrees with translator over instruction "
+                                "decoding\n"
+                                "Please report this to qemu-devel@nongnu.org\n");
             break;
         }
     }
@@ -593,7 +600,11 @@ void disas(FILE *out, void *code, unsigned long size)
     CPUDebug s;
     int (*print_insn)(bfd_vma pc, disassemble_info *info) = NULL;
 
+#ifdef __ANDROID__
+    INIT_DISASSEMBLE_INFO(s.info, out, qemu_android_fprintf);
+#else
     INIT_DISASSEMBLE_INFO(s.info, out, fprintf);
+#endif
     s.info.print_address_func = generic_print_host_address;
 
     s.info.buffer = code;
@@ -672,9 +683,9 @@ void disas(FILE *out, void *code, unsigned long size)
         print_insn = print_insn_od_host;
     }
     for (pc = (uintptr_t)code; size > 0; pc += count, size -= count) {
-        fprintf(out, "0x%08" PRIxPTR ":  ", pc);
+        s.info.fprintf_func(s.info.stream, "0x%08" PRIxPTR ":  ", pc);
         count = print_insn(pc, &s.info);
-	fprintf(out, "\n");
+	s.info.fprintf_func(s.info.stream, "\n");
 	if (count < 0)
 	    break;
     }

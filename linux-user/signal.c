@@ -198,6 +198,18 @@ int block_signals(void)
     return atomic_xchg(&ts->signal_pending, 1);
 }
 
+#ifdef __ANDROID__
+static inline int sigorset(sigset_t* dest, const sigset_t* left, const sigset_t* right) {
+  sigemptyset(dest);
+  for (size_t i = 0; i < sizeof(sigset_t) * CHAR_BIT; ++i) {
+    if (sigismember(left, i) == 1 || sigismember(right, i) == 1) {
+      sigaddset(dest, i);
+    }
+  }
+  return 0;
+}
+#endif
+
 /* Wrapper for sigprocmask function
  * Emulates a sigprocmask in a safe way for the guest. Note that set and oldset
  * are host signal set, not guest ones. Returns -TARGET_ERESTARTSYS if
@@ -207,7 +219,16 @@ int block_signals(void)
  */
 int do_sigprocmask(int how, const sigset_t *set, sigset_t *oldset)
 {
+#ifdef __ANDROID__
+    // In Android Q, pthread creation uses sigprocmask, but thread_cpu is
+    // still NULL at that point.
+    TaskState *ts = (TaskState *)(thread_cpu ? thread_cpu->opaque : NULL);
+    if (ts == NULL) {
+        return 0;
+    }
+#else
     TaskState *ts = (TaskState *)thread_cpu->opaque;
+#endif
 
     if (oldset) {
         *oldset = ts->signal_mask;

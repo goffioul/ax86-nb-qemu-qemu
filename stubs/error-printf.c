@@ -1,5 +1,6 @@
 #include "qemu/osdep.h"
 #include "qemu/error-report.h"
+#include "qemu/log.h"
 
 int error_vprintf(const char *fmt, va_list ap)
 {
@@ -13,7 +14,11 @@ int error_vprintf(const char *fmt, va_list ap)
         g_free(msg);
         return ret;
     }
+#ifdef __ANDROID__
+    return qemu_android_vfprintf(stderr, fmt, ap);
+#else
     return vfprintf(stderr, fmt, ap);
+#endif
 }
 
 int error_vprintf_unless_qmp(const char *fmt, va_list ap)

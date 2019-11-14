@@ -2570,9 +2570,13 @@ static void load_elf_image(const char *image_name, int image_fd,
         info->brk = info->end_code;
     }
 
+#ifdef __ANDROID__
+    load_symbols(ehdr, image_fd, load_bias);
+#else
     if (qemu_log_enabled()) {
         load_symbols(ehdr, image_fd, load_bias);
     }
+#endif
 
     mmap_unlock();
 
@@ -2678,7 +2682,11 @@ static void load_symbols(struct elfhdr *hdr, int fd, abi_ulong load_bias)
 
     bswap_shdr(shdr, shnum);
     for (i = 0; i < shnum; ++i) {
+#ifdef __ANDROID__
+        if (shdr[i].sh_type == SHT_DYNSYM) {
+#else
         if (shdr[i].sh_type == SHT_SYMTAB) {
+#endif
             sym_idx = i;
             str_idx = shdr[i].sh_link;
             goto found;
@@ -2720,12 +2728,18 @@ static void load_symbols(struct elfhdr *hdr, int fd, abi_ulong load_bias)
         /* Throw away entries which we do not need.  */
         if (syms[i].st_shndx == SHN_UNDEF
             || syms[i].st_shndx >= SHN_LORESERVE
-            || ELF_ST_TYPE(syms[i].st_info) != STT_FUNC) {
+#ifdef __ANDROID__
+            || (ELF_ST_TYPE(syms[i].st_info) != STT_FUNC
+                && ELF_ST_TYPE(syms[i].st_info) != STT_OBJECT)
+#else
+            || ELF_ST_TYPE(syms[i].st_info) != STT_FUNC
+#endif
+            ) {
             if (i < --nsyms) {
                 syms[i] = syms[nsyms];
             }
         } else {
-#if defined(TARGET_ARM) || defined (TARGET_MIPS)
+#if (defined(TARGET_ARM) || defined (TARGET_MIPS)) && ! defined(__ANDROID__)
             /* The bottom address bit marks a Thumb or MIPS16 symbol.  */
             syms[i].st_value &= ~(target_ulong)1;
 #endif
