@@ -203,7 +203,14 @@ static inline int sigorset(sigset_t* dest, const sigset_t* left, const sigset_t*
  */
 int do_sigprocmask(int how, const sigset_t *set, sigset_t *oldset)
 {
+#ifdef __ANDROID__
+    TaskState *ts = (TaskState *)(thread_cpu ? thread_cpu->opaque : NULL);
+    if (ts == NULL) {
+        return 0;
+    }
+#else
     TaskState *ts = (TaskState *)thread_cpu->opaque;
+#endif
 
     if (oldset) {
         *oldset = ts->signal_mask;
