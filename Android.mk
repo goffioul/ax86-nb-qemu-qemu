@@ -318,6 +318,7 @@ include $(BUILD_STATIC_LIBRARY)
 
 include $(CLEAR_VARS)
 LOCAL_MODULE := qemu-arm
+LOCAL_SRC_FILES := linux-user/android-main.c
 LOCAL_STATIC_LIBRARIES := libqemu-core libqemu-target libqemu-capstone libqemu-glib
 LOCAL_SHARED_LIBRARIES := libz liblog
 include $(BUILD_EXECUTABLE)
