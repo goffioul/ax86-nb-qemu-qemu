@@ -22,10 +22,16 @@
 
 #include "exec/log.h"
 
+#ifdef __ANDROID__
+#define excp_fprintf qemu_android_fprintf
+#else
+#define excp_fprintf fprintf
+#endif
+
 #define EXCP_DUMP(env, fmt, ...)                                        \
 do {                                                                    \
     CPUState *cs = env_cpu(env);                                        \
-    fprintf(stderr, fmt , ## __VA_ARGS__);                              \
+    excp_fprintf(stderr, fmt , ## __VA_ARGS__);                         \
     cpu_dump_state(cs, stderr, 0);                                      \
     if (qemu_log_separate()) {                                          \
         qemu_log(fmt, ## __VA_ARGS__);                                  \
