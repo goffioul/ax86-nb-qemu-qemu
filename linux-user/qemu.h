@@ -228,6 +228,8 @@ extern syscall_handler_t syscall_handler;
 extern const char *cpu_type;
 extern struct image_info *info;
 extern struct linux_binprm *bprm;
+typedef void(*svc_handler_t)(void *cpu_env, int num);
+extern svc_handler_t svc_handler;
 #endif
 
 /* Creates the initial guest address space in the host memory space using
@@ -386,6 +388,9 @@ void print_syscall(int num,
                    abi_long arg1, abi_long arg2, abi_long arg3,
                    abi_long arg4, abi_long arg5, abi_long arg6);
 void print_syscall_ret(int num, abi_long arg1);
+#ifdef __ANDROID__
+void print_syscall_name(int num);
+#endif
 /**
  * print_taken_signal:
  * @target_signum: target signal being taken

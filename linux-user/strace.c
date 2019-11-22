@@ -2867,3 +2867,15 @@ void print_taken_signal(int target_signum, const target_siginfo_t *tinfo)
     print_siginfo(tinfo);
     gemu_log(" ---\n");
 }
+
+#ifdef __ANDROID__
+void print_syscall_name(int num)
+{
+    int i;
+
+    for(i=0;i<nsyscalls;i++)
+        if( scnames[i].nr == num ) {
+            gemu_log("syscall = %s\n", scnames[i].name);
+        }
+}
+#endif
