@@ -371,6 +371,10 @@ void cpu_loop(CPUARMState *env)
                             env->regs[0] = ret;
                         }
                     }
+#ifdef __ANDROID__
+                } else if (svc_handler) {
+                    svc_handler(env, n);
+#endif
                 } else {
                     goto error;
                 }
@@ -455,3 +459,7 @@ void target_cpu_copy_regs(CPUArchState *env, struct target_pt_regs *regs)
     /* This will be filled in on the first SYS_HEAPINFO call.  */
     ts->heap_limit = 0;
 }
+
+#ifdef __ANDROID__
+svc_handler_t svc_handler = NULL;
+#endif
