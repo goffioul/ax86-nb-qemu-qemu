@@ -53,6 +53,9 @@ static void qemu_android_log_flush()
       memmove(android_log_buffer, from, len + 1);
       android_log_buffer_pos = strlen(android_log_buffer);
   }
+  else if (*from != '\0') {
+      android_log_buffer_pos = strlen(android_log_buffer);
+  }
   else {
       android_log_buffer_pos = 0;
   }
