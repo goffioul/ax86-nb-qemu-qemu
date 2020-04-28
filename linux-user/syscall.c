@@ -11997,6 +11997,9 @@ abi_long do_syscall(void *cpu_env, int num, abi_long arg1,
 {
     CPUState *cpu = env_cpu(cpu_env);
     abi_long ret;
+#ifdef __ANDROID__
+    int do_local_strace = 0;
+#endif
 
 #ifdef DEBUG_ERESTARTSYS
     /* Debug-only code for exercising the syscall-restart code paths
@@ -12012,10 +12015,22 @@ abi_long do_syscall(void *cpu_env, int num, abi_long arg1,
     }
 #endif
 
+#ifdef __ANDROID__
+    if (num != TARGET_NR_mmap && num != TARGET_NR_mmap2 &&
+        num != TARGET_NR_munmap && num != TARGET_NR_mprotect &&
+        num != TARGET_NR_madvise && num != TARGET_NR_prctl &&
+        num != 0x1000 && num != 0x1001)
+      do_local_strace = 1;
+#endif
+
     trace_guest_user_syscall(cpu, num, arg1, arg2, arg3, arg4,
                              arg5, arg6, arg7, arg8);
 
+#ifdef __ANDROID__
+    if (unlikely(do_strace) || do_local_strace) {
+#else
     if (unlikely(do_strace)) {
+#endif
         print_syscall(num, arg1, arg2, arg3, arg4, arg5, arg6);
         ret = do_syscall1(cpu_env, num, arg1, arg2, arg3, arg4,
                           arg5, arg6, arg7, arg8);
@@ -12026,6 +12041,9 @@ abi_long do_syscall(void *cpu_env, int num, abi_long arg1,
 #endif
         ret = do_syscall1(cpu_env, num, arg1, arg2, arg3, arg4,
                           arg5, arg6, arg7, arg8);
+#ifdef __ANDROID__
+        //print_syscall_ret(num, ret);
+#endif
     }
 
     trace_guest_user_syscall_ret(cpu, num, ret);
