@@ -872,8 +872,13 @@ int main(int argc, char **argv, char **envp)
 
     if (gdbstub_port) {
         if (gdbserver_start(gdbstub_port) < 0) {
+#ifdef __ANDROID__
+            qemu_android_fprintf(stderr, "qemu: could not open gdbserver on port %d\n",
+                                 gdbstub_port);
+#else
             fprintf(stderr, "qemu: could not open gdbserver on port %d\n",
                     gdbstub_port);
+#endif
             exit(EXIT_FAILURE);
         }
         gdb_handlesig(cpu, 0);
