@@ -7509,7 +7509,9 @@ static int do_openat(void *cpu_env, int dirfd, const char *pathname, int flags, 
         int fd, r;
 
         /* create temporary file to map stat to */
-        tmpdir = getenv("TMPDIR");
+        tmpdir = temporary_dir;
+        if (!tmpdir)
+            tmpdir = getenv("TMPDIR");
         if (!tmpdir)
             tmpdir = "/tmp";
         snprintf(filename, sizeof(filename), "%s/qemu-open.XXXXXX", tmpdir);
