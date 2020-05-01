@@ -101,6 +101,7 @@ unsigned long reserved_va;
 static void usage(int exitcode);
 
 static const char *interp_prefix = CONFIG_QEMU_INTERP_PREFIX;
+const char *temporary_dir;
 const char *qemu_uname_release;
 
 /* XXX: on x86 MAP_GROWSDOWN only works if ESP <= address + 32, so
@@ -245,6 +246,11 @@ static void handle_arg_log(const char *arg)
     }
     qemu_log_needs_buffers();
     qemu_set_log(mask);
+}
+
+static void handle_arg_tmpdir(const char *arg)
+{
+    temporary_dir = strdup(arg);
 }
 
 static void handle_arg_dfilter(const char *arg)
@@ -446,6 +452,8 @@ static const struct qemu_argument arg_table[] = {
      "address",    "set guest_base address to 'address'"},
     {"R",          "QEMU_RESERVED_VA", true,  handle_arg_reserved_va,
      "size",       "reserve 'size' bytes for guest virtual address space"},
+    {"T",          "QEMU_TEMPDIR"    , true,  handle_arg_tmpdir,
+     "tmpdir",     "sets temporary directory"},
     {"d",          "QEMU_LOG",         true,  handle_arg_log,
      "item[,...]", "enable logging of specified items "
      "(use '-d help' for a list of items)"},
