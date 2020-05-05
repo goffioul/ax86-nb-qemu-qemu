@@ -827,7 +827,11 @@ int main(int argc, char **argv, char **envp)
     /*
      * Prepare copy of argv vector for target.
      */
+#ifdef __ANDROID__
+    target_argc = 1;
+#else
     target_argc = argc - optind;
+#endif
     target_argv = calloc(target_argc + 1, sizeof (char *));
     if (target_argv == NULL) {
         (void) fprintf(stderr, "Unable to allocate memory for target_argv\n");
