@@ -689,7 +689,12 @@ int main(int argc, char **argv, char **envp)
     log_mask = last_log_mask | (enable_strace ? LOG_STRACE : 0);
     if (log_mask) {
         qemu_log_needs_buffers();
+#ifdef __ANDROID__
+        // Disable a some verbose logs during the initial phase
+        qemu_set_log(log_mask & ~(CPU_LOG_TB_NOCHAIN|LOG_ANDROID|LOG_ANDROID_TB));
+#else
         qemu_set_log(log_mask);
+#endif
     }
 
     if (!trace_init_backends()) {
@@ -914,6 +919,10 @@ int main(int argc, char **argv, char **envp)
     }
     cpu_loop(env);
     /* never exits */
+
+#ifdef __ANDROID__
+    qemu_set_log(log_mask);
+#endif
 
     return 0;
 }

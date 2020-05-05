@@ -47,7 +47,7 @@ static void qemu_android_log_flush()
 
   while (*from != '\0' && (to = strchr(from, '\n')) != NULL) {
       *to = '\0';
-      __android_log_print(ANDROID_LOG_VERBOSE, "libqemu", "%s", from);
+      __android_log_print(ANDROID_LOG_DEBUG, "libqemu", "%s", from);
       from = to + 1;
   }
   if (from != android_log_buffer && *from != '\0') {
@@ -391,6 +391,10 @@ const QEMULogItem qemu_log_items[] = {
 #endif
     { LOG_STRACE, "strace",
       "log every user-mode syscall, its input, and its result" },
+    { LOG_ANDROID, "android",
+      "Android only: enable additional logs" },
+    { LOG_ANDROID_TB, "android-tb",
+      "Android only: enable additional TB logs" },
     { 0, NULL, NULL },
 };
 

@@ -12468,7 +12468,7 @@ abi_long do_syscall(void *cpu_env, int num, abi_long arg1,
         num != TARGET_NR_munmap && num != TARGET_NR_mprotect &&
         num != TARGET_NR_madvise && num != TARGET_NR_prctl &&
         num != 0x1000 && num != 0x1001)
-      do_local_strace = 1;
+      do_local_strace = qemu_loglevel_mask(LOG_ANDROID);
 #endif
 
     record_syscall_start(cpu, num, arg1,
