@@ -1,0 +1,232 @@
+#!/bin/bash
+
+TRACE_FILES="
+	accel/tcg/trace.h
+	hw/core/trace.c
+	hw/core/trace.h
+	linux-user/trace.c
+	linux-user/trace.h
+	qapi/qapi-builtin-types.c
+	qapi/qapi-builtin-types.h
+	qapi/qapi-builtin-visit.c
+	qapi/qapi-builtin-visit.h
+	qapi/qapi-commands-common.c
+	qapi/qapi-commands-common.h
+	qapi/qapi-commands-machine-target.c
+	qapi/qapi-commands-machine-target.h
+	qapi/qapi-commands-misc.c
+	qapi/qapi-commands-misc.h
+	qapi/qapi-emit-events.c
+	qapi/qapi-emit-events.h
+	qapi/qapi-events-audio.c
+	qapi/qapi-events-audio.h
+	qapi/qapi-events-authz.c
+	qapi/qapi-events-authz.h
+	qapi/qapi-events-block-core.c
+	qapi/qapi-events-block-core.h
+	qapi/qapi-events-block.c
+	qapi/qapi-events-block.h
+	qapi/qapi-events-char.c
+	qapi/qapi-events-char.h
+	qapi/qapi-events-common.c
+	qapi/qapi-events-common.h
+	qapi/qapi-events-crypto.c
+	qapi/qapi-events-crypto.h
+	qapi/qapi-events-dump.c
+	qapi/qapi-events-dump.h
+	qapi/qapi-events-error.c
+	qapi/qapi-events-error.h
+	qapi/qapi-events-introspect.c
+	qapi/qapi-events-introspect.h
+	qapi/qapi-events-job.c
+	qapi/qapi-events-job.h
+	qapi/qapi-events-machine-target.c
+	qapi/qapi-events-machine-target.h
+	qapi/qapi-events-machine.c
+	qapi/qapi-events-machine.h
+	qapi/qapi-events-migration.c
+	qapi/qapi-events-migration.h
+	qapi/qapi-events-misc-target.c
+	qapi/qapi-events-misc-target.h
+	qapi/qapi-events-misc.c
+	qapi/qapi-events-misc.h
+	qapi/qapi-events-net.c
+	qapi/qapi-events-net.h
+	qapi/qapi-events-qdev.c
+	qapi/qapi-events-qdev.h
+	qapi/qapi-events-qom.c
+	qapi/qapi-events-qom.h
+	qapi/qapi-events-rdma.c
+	qapi/qapi-events-rdma.h
+	qapi/qapi-events-rocker.c
+	qapi/qapi-events-rocker.h
+	qapi/qapi-events-run-state.c
+	qapi/qapi-events-run-state.h
+	qapi/qapi-events-sockets.c
+	qapi/qapi-events-sockets.h
+	qapi/qapi-events-tpm.c
+	qapi/qapi-events-tpm.h
+	qapi/qapi-events-trace.c
+	qapi/qapi-events-trace.h
+	qapi/qapi-events-transaction.c
+	qapi/qapi-events-transaction.h
+	qapi/qapi-events-ui.c
+	qapi/qapi-events-ui.h
+	qapi/qapi-types-audio.c
+	qapi/qapi-types-audio.h
+	qapi/qapi-types-authz.c
+	qapi/qapi-types-authz.h
+	qapi/qapi-types-block-core.c
+	qapi/qapi-types-block-core.h
+	qapi/qapi-types-block.c
+	qapi/qapi-types-block.h
+	qapi/qapi-types-char.c
+	qapi/qapi-types-char.h
+	qapi/qapi-types-common.c
+	qapi/qapi-types-common.h
+	qapi/qapi-types-control.c
+	qapi/qapi-types-control.h
+	qapi/qapi-types-crypto.c
+	qapi/qapi-types-crypto.h
+	qapi/qapi-types-dump.c
+	qapi/qapi-types-dump.h
+	qapi/qapi-types-error.c
+	qapi/qapi-types-error.h
+	qapi/qapi-types-introspect.c
+	qapi/qapi-types-introspect.h
+	qapi/qapi-types-job.c
+	qapi/qapi-types-job.h
+	qapi/qapi-types-machine-target.c
+	qapi/qapi-types-machine-target.h
+	qapi/qapi-types-machine.c
+	qapi/qapi-types-machine.h
+	qapi/qapi-types-migration.c
+	qapi/qapi-types-migration.h
+	qapi/qapi-types-misc-target.c
+	qapi/qapi-types-misc-target.h
+	qapi/qapi-types-misc.c
+	qapi/qapi-types-misc.h
+	qapi/qapi-types-net.c
+	qapi/qapi-types-net.h
+	qapi/qapi-types-qdev.c
+	qapi/qapi-types-qdev.h
+	qapi/qapi-types-qom.c
+	qapi/qapi-types-qom.h
+	qapi/qapi-types-rdma.c
+	qapi/qapi-types-rdma.h
+	qapi/qapi-types-rocker.c
+	qapi/qapi-types-rocker.h
+	qapi/qapi-types-run-state.c
+	qapi/qapi-types-run-state.h
+	qapi/qapi-types-sockets.c
+	qapi/qapi-types-sockets.h
+	qapi/qapi-types-tpm.c
+	qapi/qapi-types-tpm.h
+	qapi/qapi-types-trace.c
+	qapi/qapi-types-trace.h
+	qapi/qapi-types-transaction.c
+	qapi/qapi-types-transaction.h
+	qapi/qapi-types-ui.c
+	qapi/qapi-types-ui.h
+	qapi/qapi-visit-audio.c
+	qapi/qapi-visit-audio.h
+	qapi/qapi-visit-authz.c
+	qapi/qapi-visit-authz.h
+	qapi/qapi-visit-block-core.c
+	qapi/qapi-visit-block-core.h
+	qapi/qapi-visit-block.c
+	qapi/qapi-visit-block.h
+	qapi/qapi-visit-char.c
+	qapi/qapi-visit-char.h
+	qapi/qapi-visit-common.c
+	qapi/qapi-visit-common.h
+	qapi/qapi-visit-crypto.c
+	qapi/qapi-visit-crypto.h
+	qapi/qapi-visit-dump.c
+	qapi/qapi-visit-dump.h
+	qapi/qapi-visit-error.c
+	qapi/qapi-visit-error.h
+	qapi/qapi-visit-introspect.c
+	qapi/qapi-visit-introspect.h
+	qapi/qapi-visit-job.c
+	qapi/qapi-visit-job.h
+	qapi/qapi-visit-machine-target.c
+	qapi/qapi-visit-machine-target.h
+	qapi/qapi-visit-machine.c
+	qapi/qapi-visit-machine.h
+	qapi/qapi-visit-migration.c
+	qapi/qapi-visit-migration.h
+	qapi/qapi-visit-misc-target.c
+	qapi/qapi-visit-misc-target.h
+	qapi/qapi-visit-misc.c
+	qapi/qapi-visit-misc.h
+	qapi/qapi-visit-net.c
+	qapi/qapi-visit-net.h
+	qapi/qapi-visit-qdev.c
+	qapi/qapi-visit-qdev.h
+	qapi/qapi-visit-qom.c
+	qapi/qapi-visit-qom.h
+	qapi/qapi-visit-rdma.c
+	qapi/qapi-visit-rdma.h
+	qapi/qapi-visit-rocker.c
+	qapi/qapi-visit-rocker.h
+	qapi/qapi-visit-run-state.c
+	qapi/qapi-visit-run-state.h
+	qapi/qapi-visit-sockets.c
+	qapi/qapi-visit-sockets.h
+	qapi/qapi-visit-tpm.c
+	qapi/qapi-visit-tpm.h
+	qapi/qapi-visit-trace.c
+	qapi/qapi-visit-trace.h
+	qapi/qapi-visit-transaction.c
+	qapi/qapi-visit-transaction.h
+	qapi/qapi-visit-ui.c
+	qapi/qapi-visit-ui.h
+	qapi/trace.c
+	qapi/trace.h
+	qom/trace.c
+	qom/trace.h
+	trace-root.c
+	trace-root.h
+	trace/generated-helpers-wrappers.h
+	trace/generated-helpers.c
+	trace/generated-helpers.h
+	trace/generated-tcg-tracers.h
+	util/trace.c
+	util/trace.h"
+TARGET_FILES="
+	target/arm/decode-a32-uncond.inc.c
+	target/arm/decode-a32.inc.c
+	target/arm/decode-t16.inc.c
+	target/arm/decode-t32.inc.c
+	target/arm/decode-vfp-uncond.inc.c
+	target/arm/decode-vfp.inc.c"
+LINUX_USER_FILES="
+	linux-user/gdbstub-xml.c"
+MISC_FILES="
+	config-host.h"
+
+fromdir=$1
+
+function copyfile
+{
+	if [ ! -f "$fromdir/$1" ]; then
+		echo "$1: file not found"
+		exit -1
+	fi
+	cp "$fromdir/$1" "$2"
+}
+
+for f in $TRACE_FILES; do
+	copyfile $f $f
+done
+
+for f in $TARGET_FILES; do
+	copyfile arm-linux-user/$f $f
+done
+
+copyfile arm-linux-user/linux-user/arm/syscall_nr.h linux-user/arm/syscall_nr.h
+copyfile arm-linux-user/gdbstub-xml.c linux-user/gdbstub-xml.c
+copyfile arm-linux-user/config-target.h config-target.h
+copyfile qemu-version.h qemu-version.h
+copyfile config-host.h config-host.h
