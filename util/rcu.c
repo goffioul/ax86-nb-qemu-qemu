@@ -377,7 +377,9 @@ static void __attribute__((__constructor__)) rcu_init(void)
 {
     smp_mb_global_init();
 #ifdef CONFIG_POSIX
+#ifndef __ANDROID__
     pthread_atfork(rcu_init_lock, rcu_init_unlock, rcu_init_child);
+#endif
 #endif
     rcu_init_complete();
 }
