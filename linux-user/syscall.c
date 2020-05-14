@@ -12478,9 +12478,6 @@ abi_long do_syscall(void *cpu_env, int num, abi_long arg1,
         print_syscall(num, arg1, arg2, arg3, arg4, arg5, arg6);
     }
 
-#ifdef __ANDROID__
-    //print_syscall_name(num);
-#endif
     ret = do_syscall1(cpu_env, num, arg1, arg2, arg3, arg4,
                       arg5, arg6, arg7, arg8);
 

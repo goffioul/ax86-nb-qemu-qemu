@@ -2810,6 +2810,12 @@ print_statx(const struct syscallname *name,
 
 static const struct syscallname scnames[] = {
 #include "strace.list"
+#ifdef __ANDROID__
+    { 0x1000, "JNIEnv",
+      "%s(" TARGET_ABI_FMT_ld "," TARGET_ABI_FMT_lu "," TARGET_ABI_FMT_lu "," TARGET_ABI_FMT_lu "," TARGET_ABI_FMT_lu "," TARGET_ABI_FMT_lu ")", NULL },
+    { 0x1001, "JavaVM",
+      "%s(" TARGET_ABI_FMT_ld "," TARGET_ABI_FMT_lu "," TARGET_ABI_FMT_lu "," TARGET_ABI_FMT_lu "," TARGET_ABI_FMT_lu "," TARGET_ABI_FMT_lu ")", NULL },
+#endif
 };
 
 static int nsyscalls = ARRAY_SIZE(scnames);
@@ -2882,15 +2888,3 @@ void print_taken_signal(int target_signum, const target_siginfo_t *tinfo)
     print_siginfo(tinfo);
     qemu_log(" ---\n");
 }
-
-#ifdef __ANDROID__
-void print_syscall_name(int num)
-{
-    int i;
-
-    for(i=0;i<nsyscalls;i++)
-        if( scnames[i].nr == num ) {
-            qemu_log("syscall = %s\n", scnames[i].name);
-        }
-}
-#endif
