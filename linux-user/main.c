@@ -691,7 +691,7 @@ int main(int argc, char **argv, char **envp)
         qemu_log_needs_buffers();
 #ifdef __ANDROID__
         // Disable a some verbose logs during the initial phase
-        qemu_set_log(log_mask & ~(CPU_LOG_TB_NOCHAIN|LOG_ANDROID|LOG_ANDROID_TB));
+        qemu_set_log(log_mask & ~(LOG_STRACE|CPU_LOG_TB_NOCHAIN|LOG_ANDROID|LOG_ANDROID_TB));
 #else
         qemu_set_log(log_mask);
 #endif
@@ -892,9 +892,9 @@ int main(int argc, char **argv, char **envp)
 
     target_set_brk(info->brk);
     syscall_init();
-#ifndef __ANDROID__
+//#ifndef __ANDROID__
     signal_init();
-#endif
+//#endif
 
     /* Now that we've loaded the binary, GUEST_BASE is fixed.  Delay
        generating the prologue until now so that the prologue can take
