@@ -563,6 +563,13 @@ static void signal_table_init(void)
     }
 }
 
+#ifdef __ANDROID__
+void qemu_android_handle_sigprof(int num)
+{
+    dump_exec_info();
+}
+#endif
+
 void signal_init(void)
 {
     TaskState *ts = (TaskState *)thread_cpu->opaque;
@@ -586,6 +593,11 @@ void signal_init(void)
             continue;
         }
 #endif
+#ifdef __ANDROID__
+        if (i == TARGET_SIGPROF) {
+            continue;
+        }
+#endif
         host_sig = target_to_host_signal(i);
         sigaction(host_sig, NULL, &oact);
         if (oact.sa_sigaction == (void *)SIG_IGN) {
@@ -602,6 +614,14 @@ void signal_init(void)
         if (fatal_signal (i))
             sigaction(host_sig, &act, NULL);
     }
+
+#ifdef __ANDROID__
+    sigemptyset(&act.sa_mask);
+    act.sa_flags = SA_RESTART;
+    act.sa_sigaction = NULL;
+    act.sa_handler = qemu_android_handle_sigprof;
+    sigaction(SIGPROF, &act, NULL);
+#endif
 }
 
 /* Force a synchronously taken signal. The kernel force_sig() function

@@ -13,6 +13,9 @@
 #include "qemu/osdep.h"
 #include "monitor/monitor.h"
 #include "qemu/qemu-print.h"
+#ifdef __ANDROID__
+#include "qemu/log.h"
+#endif
 
 /*
  * Print like vprintf().
@@ -23,7 +26,11 @@ int qemu_vprintf(const char *fmt, va_list ap)
     if (cur_mon) {
         return monitor_vprintf(cur_mon, fmt, ap);
     }
+#ifdef __ANDROID__
+    return qemu_android_vfprintf(stderr, fmt, ap);
+#else
     return vprintf(fmt, ap);
+#endif
 }
 
 /*
@@ -50,7 +57,11 @@ int qemu_vfprintf(FILE *stream, const char *fmt, va_list ap)
     if (!stream) {
         return monitor_vprintf(cur_mon, fmt, ap);
     }
+#ifdef __ANDROID__
+    return qemu_android_vfprintf(stream, fmt, ap);
+#else
     return vfprintf(stream, fmt, ap);
+#endif
 }
 
 /*
