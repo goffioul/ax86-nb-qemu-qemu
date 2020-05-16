@@ -11712,6 +11712,7 @@ static abi_long do_syscall1(void *cpu_env, int num, abi_long arg1,
 
 #if defined(TARGET_NR_set_tid_address) && defined(__NR_set_tid_address)
     case TARGET_NR_set_tid_address:
+        ((TaskState *)cpu->opaque)->child_tidptr = arg1;
         return get_errno(set_tid_address((int *)g2h(arg1)));
 #endif
 
