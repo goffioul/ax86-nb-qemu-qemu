@@ -200,6 +200,7 @@ QEMU_CORE_SRC_FILES := \
 	util/oslib-posix.c \
 	util/pagesize.c \
 	util/path.c \
+	util/profiler.c \
 	util/qdist.c \
 	util/qemu-config.c \
 	util/qemu-error.c \

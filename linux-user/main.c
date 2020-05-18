@@ -46,6 +46,9 @@
 #include "target_elf.h"
 #include "cpu_loop-common.h"
 #include "crypto/init.h"
+#ifdef __ANDROID__
+#include "qemu/profiler.h"
+#endif
 
 char *exec_path;
 
@@ -892,9 +895,10 @@ int main(int argc, char **argv, char **envp)
 
     target_set_brk(info->brk);
     syscall_init();
-//#ifndef __ANDROID__
     signal_init();
-//#endif
+#ifdef __ANDROID__
+    profiler_init();
+#endif
 
     /* Now that we've loaded the binary, GUEST_BASE is fixed.  Delay
        generating the prologue until now so that the prologue can take

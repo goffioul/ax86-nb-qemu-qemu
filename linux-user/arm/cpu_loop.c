@@ -22,6 +22,9 @@
 #include "qemu.h"
 #include "elf.h"
 #include "cpu_loop-common.h"
+#ifdef __ANDROID__
+#include "qemu/profiler.h"
+#endif
 
 #define get_user_code_u32(x, gaddr, env)                \
     ({ abi_long __r = get_user_u32((x), (gaddr));       \
@@ -214,6 +217,10 @@ void cpu_loop(CPUARMState *env)
     uint32_t addr;
     abi_ulong ret;
 
+#ifdef __ANDROID__
+    profiler_start(PROFILER_MODE_CPU_LOOP);
+#endif
+
     for(;;) {
         cpu_exec_start(cs);
         trapnr = cpu_exec(cs);
@@ -356,6 +363,9 @@ void cpu_loop(CPUARMState *env)
                             break;
                         }
                     } else {
+#ifdef __ANDROID__
+                        profiler_start(PROFILER_MODE_SYSCALL);
+#endif
                         ret = do_syscall(env,
                                          n,
                                          env->regs[0],
@@ -365,6 +375,9 @@ void cpu_loop(CPUARMState *env)
                                          env->regs[4],
                                          env->regs[5],
                                          0, 0);
+#ifdef __ANDROID__
+                        profiler_stop(PROFILER_MODE_SYSCALL);
+#endif
                         if (ret == -TARGET_ERESTARTSYS) {
                             env->regs[15] -= env->thumb ? 2 : 4;
                         } else if (ret != -TARGET_QEMU_ESIGRETURN) {
@@ -424,10 +437,14 @@ void cpu_loop(CPUARMState *env)
         process_pending_signals(env);
 #ifdef __ANDROID__
         if (trapnr == EXCP_YIELD) {
-            return;
+            break;
         }
 #endif
     }
+
+#ifdef __ANDROID__
+    profiler_stop(PROFILER_MODE_CPU_LOOP);
+#endif
 }
 
 void target_cpu_copy_regs(CPUArchState *env, struct target_pt_regs *regs)

@@ -37,6 +37,9 @@
 #endif
 #include "sysemu/cpus.h"
 #include "sysemu/replay.h"
+#ifdef __ANDROID__
+#include "qemu/profiler.h"
+#endif
 
 /* -icount align implementation. */
 
@@ -667,6 +670,9 @@ int cpu_exec(CPUState *cpu)
     CPUClass *cc = CPU_GET_CLASS(cpu);
     int ret;
     SyncClocks sc = { 0 };
+#ifdef __ANDROID__
+    volatile int tb_profile_mode = -1;
+#endif
 
     /* replay_interrupt may need current_cpu */
     current_cpu = cpu;
@@ -711,6 +717,13 @@ int cpu_exec(CPUState *cpu)
         assert_no_pages_locked();
     }
 
+#ifdef __ANDROID__
+    if (tb_profile_mode != -1) {
+        profiler_stop(tb_profile_mode);
+        tb_profile_mode = -1;
+    }
+#endif
+
     /* if an exception is pending, we execute it here */
     while (!cpu_handle_exception(cpu, &ret)) {
         TranslationBlock *last_tb = NULL;
@@ -731,8 +744,21 @@ int cpu_exec(CPUState *cpu)
                 cpu->cflags_next_tb = -1;
             }
 
+#ifdef __ANDROID__
+            tb_profile_mode = PROFILER_MODE_TCG_GEN;
+            profiler_start(PROFILER_MODE_TCG_GEN);
+#endif
             tb = tb_find(cpu, last_tb, tb_exit, cflags);
+#ifdef __ANDROID__
+            profiler_stop(PROFILER_MODE_TCG_GEN);
+            tb_profile_mode = PROFILER_MODE_TB_EXEC;
+            profiler_start(PROFILER_MODE_TB_EXEC);
+#endif
             cpu_loop_exec_tb(cpu, tb, &last_tb, &tb_exit);
+#ifdef __ANDROID__
+            profiler_stop(PROFILER_MODE_TB_EXEC);
+            tb_profile_mode = -1;
+#endif
             /* Try to align the host and virtual clocks
                if the guest is in advance */
             align_clocks(&sc, cpu);

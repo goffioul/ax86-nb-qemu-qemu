@@ -564,7 +564,7 @@ static void signal_table_init(void)
 }
 
 #ifdef __ANDROID__
-void qemu_android_handle_sigprof(int num)
+static void qemu_android_handle_sigprof(int num)
 {
     dump_exec_info();
 }
@@ -594,7 +594,7 @@ void signal_init(void)
         }
 #endif
 #ifdef __ANDROID__
-        if (i == TARGET_SIGPROF) {
+        if (i == TARGET_SIGPROF || i == TARGET_SIGUSR2) {
             continue;
         }
 #endif
